@@ -12,7 +12,7 @@ app.use(express.json()); //JSON 본문 파싱 미들웨어
 
 //1. mysql 연결 정보 셋팅
 const connection = mysql.createConnection({
-  host:'database:3306',
+  host:'database',
   user:'root',
   password:'1234',
   database:'kdt'
