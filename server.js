@@ -419,6 +419,51 @@ app.post('/question', (req, res) => {
   )
 });
 
+// ginipet
+app.post('/gp_register', async (req, res) => {
+  // res.json('Excused from Backend');
+  try {
+    const { username, password, tel, email } = req.body;
+    const hash = await bcrypt.hash(password, 10); // 해시 패스워드로 암호화
+  
+    connection.query('INSERT INTO ginipet_users (username, password, tel, email) VALUES (?, ?, ?, ?)', [username, hash, tel, email], (err) => {
+      if(err){
+        if(err.code == 'ER_DUP_ENTRY'){
+          return res.status(400).json({error: '이미 존재하는 아이디입니다.'});
+        }
+        return res.status(500).json({error: '회원가입 실패'});
+      }
+      res.json({success: true});
+    });
+  } catch (error) {
+    res.status(500).json({ error: '서버 내부 오류' });
+  }
+});
+
+// 로그인 폼에서 전달받은 username, password 값을 처리
+app.post('/gp_login', (req, res) => {
+  const {username, password} = req.body;
+
+  connection.query('SELECT * from ginipet_users WHERE username = ?', [username], async(err, results) => {
+    if(err || results.length === 0) {
+      return res.status(401).json({ error: '아이디 또는 비밀번호가 틀렸습니다.' });
+    }
+
+    const user = results[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if(!isMatch) {
+      return res.status(401).json ({ error: '아이디 또는 비밀번호가 틀립니다.'});
+    }
+
+    // 토큰 생성시 1시간 설정
+    const token = jwt.sign({id: user.id, username: user.username}, SECRET_KEY, {expiresIn: '1h'});
+    
+    // 토큰 발급
+    res.json({token});
+  });
+});
+
 //서버실행
 app.listen(port, ()=>{
   console.log('Listening...');
