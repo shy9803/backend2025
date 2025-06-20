@@ -883,6 +883,6 @@ app.post('/api/cart', (req, res) => {
 
 //서버실행
 app.listen(port, ()=>{
-  // console.log('Listening...');
-  console.log(`Server running on http://localhost:${port}`);
+  console.log('Listening...');
+  // console.log(`Server running on http://localhost:${port}`);
 });
