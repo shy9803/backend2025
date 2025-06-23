@@ -99,7 +99,7 @@ connectionGM.connect((err)=>{
 
 /* ------------ KDT 수업 ----------------- */
 // 3. 로그인 폼에서 post 방식으로 전달받은 데이터를 DB에 조회하여 결과값을 리턴함.
-app.post('/login', (req, res) => {
+app.post('/kdt_login', (req, res) => {
   const {username, password} = req.body;
 
   connectionKdt.query('SELECT * FROM users WHERE username = ?', [username], async(err, result) => {
@@ -123,7 +123,7 @@ app.post('/login', (req, res) => {
 });
 
 // 4. Register.js에서 넘겨 받은 username, password를 SQL DB에 입력하여 추가한다.
-app.post('/register', async(req, res) => {
+app.post('/kdt_register', async(req, res) => {
   const {username, password} = req.body;
   const hash = await bcrypt.hash(password, 10); // 패스워드 hash 암호화
 
@@ -143,7 +143,7 @@ app.post('/register', async(req, res) => {
 
 // Login2, Register2
 // 3-1. 로그인(Login2)
-app.post('/login2', (req, res) => {
+app.post('/kdt_login2', (req, res) => {
   const {username, password} = req.body;
 
   connectionKdt.query(
@@ -169,7 +169,7 @@ app.post('/login2', (req, res) => {
 });
 
 // 4-1. 회원가입(Register2)
-app.post('/register2', async(req, res) => {
+app.post('/kdt_register2', async(req, res) => {
   const {username, password, tel, email} = req.body;
   const hash = await bcrypt.hash(password, 10);
 
