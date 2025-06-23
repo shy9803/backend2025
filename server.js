@@ -749,7 +749,7 @@ app.get('/api/products/:id', (req, res) => {
 app.get('/api/cart', authenticateToken, (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   const sql = `
-    SELECT cart_id AS id, product_id, title, brand, kind, \`condition\`, price, shipping_fee, trade_type, region, image_main, added_at
+    SELECT cart_id AS id, product_id, title, brand, \`condition\`, price, shipping_fee, trade_type, region, image_main, added_at
     FROM green_cart
     WHERE user_id = ?
   `;
@@ -779,7 +779,7 @@ app.delete('/api/cart', authenticateToken, (req, res) => {
 app.post('/api/cart', authenticateToken, (req, res) => {
   const { product_id } = req.body;
   // 상품 상세 정보 조회
-  const productSql = `SELECT title, brand, kind, \`condition\`, price, trade_type, region, image_main, shipping_fee FROM green_products WHERE id = ?`;
+  const productSql = `SELECT title, brand, \`condition\`, price, trade_type, region, image_main, shipping_fee FROM green_products WHERE id = ?`;
   connectionGM.query(productSql, [product_id], (productErr, productResults) => {
     if (productErr) return res.status(500).json({ message: '상품 조회 오류' });
     if (!productResults.length) return res.status(404).json({ message: '상품 없음' });
@@ -798,7 +798,7 @@ app.post('/api/cart', authenticateToken, (req, res) => {
       // 장바구니에 상품 추가
       const insertSql = `
         INSERT INTO green_cart
-        (user_id, product_id, title, brand, kind, \`condition\`, shipping_fee, price, trade_type, region, image_main, added_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, NOW())`;
+        (user_id, product_id, title, brand, \`condition\`, shipping_fee, price, trade_type, region, image_main, added_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`;
 
       const params = [
         req.user.id, product_id, product.title, product.brand, product.kind, product.condition, product.shipping_fee, product.price, product.trade_type, product.region, product.image_main
