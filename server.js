@@ -12,10 +12,6 @@ app.use(cors());
 app.use(express.json()); //JSON 본문 파싱 미들웨어
 
 /* --------------- 그린마켓 --------------- */
-// 업로드
-const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 /* -- 상품 이미지 업로드를 위함 -- */
 /* -- uploads 폴더 자동 생성 & 정적 제공 -- */
 const fs   = require('fs');
