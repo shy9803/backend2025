@@ -542,7 +542,7 @@ app.post('/gp_login', (req, res) => {
 /* --------------- 그린마켓 --------------- */
 /* -- 로그인/회원가입 -- */
 // 회원가입
-app.post('/api/register', async(req, res) => {
+app.post('/register', async(req, res) => {
   const { username, userid, password, phone, email, region } = req.body;
 
   try {
@@ -567,7 +567,7 @@ app.post('/api/register', async(req, res) => {
 });
 
 // 로그인
-app.post('/api/login', (req, res) => {
+app.post('/login', (req, res) => {
   const {userid, password} = req.body;
 
   connectionGM.query('SELECT * FROM green_users WHERE userid = ?', [userid], async(err, results) => {
@@ -624,7 +624,7 @@ app.post('/api/login', (req, res) => {
 });
 
 // 회원정보 수정
-app.put('/api/member/update/:id', async(req, res) => {
+app.put('/member/update/:id', async(req, res) => {
   const {username, password, phone, email, region} = req.body
   const {id} = req.params;
 
@@ -652,7 +652,7 @@ app.put('/api/member/update/:id', async(req, res) => {
 });
 
 // 회원정보 수정을 위한 특정 조회
-app.get('/api/member/:id', (req, res) => {
+app.get('/member/:id', (req, res) => {
   const id = parseInt(req.params.id, 10); //숫자형 변환
 
   // 비밀번호 제외하고 불러오기
@@ -688,7 +688,7 @@ function authenticateToken(req, res, next) {
 }
 
 // 상품 등록(= post)
-app.post('/api/products', authenticateToken, upload, (req, res) => {
+app.post('/products', authenticateToken, upload, (req, res) => {
   // console.log('req.body:', req.body);
   // console.log('req.files:', req.files);
 
@@ -716,7 +716,7 @@ app.post('/api/products', authenticateToken, upload, (req, res) => {
 });
 
 // 상품 조회 API
-app.get('/api/products', (req, res) => {
+app.get('/products', (req, res) => {
   connectionGM.query(
     'SELECT * FROM green_products ORDER BY id DESC',
     (err, rows) => {
@@ -730,7 +730,7 @@ app.get('/api/products', (req, res) => {
 });
 
 // 상품 상세 조회
-app.get('/api/products/:id', (req, res) => {
+app.get('/products/:id', (req, res) => {
   const sql = `
     SELECT 
       p.*, 
@@ -750,7 +750,7 @@ app.get('/api/products/:id', (req, res) => {
 
 /* -- 장바구니 -- */
 //장바구니 조회 (하단과 유사)
-app.get('/api/cart', authenticateToken, (req, res) => {
+app.get('/cart', authenticateToken, (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   const sql = `
     SELECT cart_id AS id, product_id, title, brand, kind, \`condition\`, price, shipping_fee, trade_type, region, image_main, added_at
@@ -764,7 +764,7 @@ app.get('/api/cart', authenticateToken, (req, res) => {
 });
 
 //장바구니 삭제
-app.delete('/api/cart', authenticateToken, (req, res) => {
+app.delete('/cart', authenticateToken, (req, res) => {
   const ids = req.body.ids;
   if (!Array.isArray(ids) || !ids.length) {
     return res.status(400).json({ message: '삭제할 상품 ID가 필요합니다.' });
@@ -780,7 +780,7 @@ app.delete('/api/cart', authenticateToken, (req, res) => {
 });
 
 /* -- 장바구니 추가 -- */
-app.post('/api/cart', authenticateToken, (req, res) => {
+app.post('/cart', authenticateToken, (req, res) => {
   const { product_id } = req.body;
   // 상품 상세 정보 조회
   const productSql = `SELECT title, brand, kind, \`condition\`, price, trade_type, region, image_main, shipping_fee FROM green_products WHERE id = ?`;
