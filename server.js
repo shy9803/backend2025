@@ -726,7 +726,7 @@ app.get('/products', (req, res) => {
 });
 
 // 상품 상세 조회
-app.get('/products/:id', (req, res) => {
+app.get('/api/products/:id', (req, res) => {
   const sql = `
     SELECT 
       p.*, 
@@ -746,7 +746,7 @@ app.get('/products/:id', (req, res) => {
 
 /* -- 장바구니 -- */
 //장바구니 조회 (하단과 유사)
-app.get('/cart', authenticateToken, (req, res) => {
+app.get('/api/cart', authenticateToken, (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   const sql = `
     SELECT cart_id AS id, product_id, title, brand, kind, \`condition\`, price, shipping_fee, trade_type, region, image_main, added_at
@@ -760,7 +760,7 @@ app.get('/cart', authenticateToken, (req, res) => {
 });
 
 //장바구니 삭제
-app.delete('/cart', authenticateToken, (req, res) => {
+app.delete('/api/cart', authenticateToken, (req, res) => {
   const ids = req.body.ids;
   if (!Array.isArray(ids) || !ids.length) {
     return res.status(400).json({ message: '삭제할 상품 ID가 필요합니다.' });
@@ -776,7 +776,7 @@ app.delete('/cart', authenticateToken, (req, res) => {
 });
 
 /* -- 장바구니 추가 -- */
-app.post('/cart', authenticateToken, (req, res) => {
+app.post('/api/cart', authenticateToken, (req, res) => {
   const { product_id } = req.body;
   // 상품 상세 정보 조회
   const productSql = `SELECT title, brand, kind, \`condition\`, price, trade_type, region, image_main, shipping_fee FROM green_products WHERE id = ?`;
