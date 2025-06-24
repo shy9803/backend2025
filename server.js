@@ -839,7 +839,7 @@ app.delete('/notice/:id', (req, res) => {
 });
 
 // 공지사항 수정 (하단 공지사항 수정 참고, GPT 도움)
-app.put('/api/notice/update/:id', (req, res) => {
+app.put('/notice/update/:id', (req, res) => {
   const {category, title, content} = req.body;
   const { id } = req.params; /* id값 불러오기 */
 
