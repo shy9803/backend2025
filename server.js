@@ -718,7 +718,7 @@ app.get('/products', (req, res) => {
     (err, rows) => {
       if (err) return res.status(500).json({ error: '조회 실패' });
       const products = rows.map(r => ({
-        id: r.id, title: r.title, brand: r.brand, kind: r.kind, condition: r.condition, price: r.price, tradeType: r.trade_type, region: r.region, description: r.description, createdAt: r.created_at, images: [r.image_main, r.image_1, r.image_2, r.image_3, r.image_4, r.image_5, r.image_6].filter(v => v)
+        id: r.id, title: r.title, brand: r.brand, kind: r.kind, condition: r.condition, price: r.price, tradeType: r.trade_type, region: r.region, description: r.description, datetime: r.datetime, images: [r.image_main, r.image_1, r.image_2, r.image_3, r.image_4, r.image_5, r.image_6].filter(v => v)
       }));
       res.json(products);
     }
