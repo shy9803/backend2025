@@ -535,7 +535,7 @@ app.post('/gp_login', (req, res) => {
   });
 });
 
-/* --------------- 그린마켓 --------------- */
+/* --------------- 그린마켓(Green Market) --------------- */
 /* -- 로그인/회원가입 -- */
 // 회원가입
 app.post('/register', async(req, res) => {
@@ -717,7 +717,7 @@ app.post('/products', authenticateToken, upload, (req, res) => {
 // 상품 조회 API
 //상품상세페이지에서 카테고리가 같은 상품 목록 조회 현재 보고 있는 상품은 제외
 app.get('/products', (req, res) => {
-  const { owner_id, exclude_id, category } = req.query;
+  const { keyword, owner_id, exclude_id, category } = req.query;
 
   let query = 'SELECT * FROM green_products WHERE 1=1';
   const params = [];
@@ -726,15 +726,17 @@ app.get('/products', (req, res) => {
     query += ' AND owner_id = ?';
     params.push(owner_id);
   }
-
   if (exclude_id) {
-    query += ' AND id != ?';
+    query += ' AND id <> ?';
     params.push(exclude_id);
   }
-
   if (category) {
     query += ' AND kind = ?';
     params.push(category);
+  }
+  if (keyword)    {
+    sql += ' AND (title LIKE ? OR brand LIKE ? OR kind LIKE ?)';
+    params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
   }
 
   query += ' ORDER BY id DESC';
@@ -809,7 +811,18 @@ app.post('/products/edit/:id', authenticateToken, (req, res) => {
     ];
 
     const sql = `
-      UPDATE green_products SET title = ?, brand = ?, kind = ?, \`condition\` = ?, price = ?, trade_type = ?, region = ?, description = ?, shipping_fee = ?, image_main = COALESCE(?, image_main), image_1 = COALESCE(?, image_1), image_2 = COALESCE(?, image_2), image_3 = COALESCE(?, image_3), image_4 = COALESCE(?, image_4), image_5 = COALESCE(?, image_5), image_6 = COALESCE(?, image_6) WHERE id = ?`;
+      UPDATE green_products 
+      SET title = ?, brand = ?, kind = ?, \`condition\` = ?, price = ?, trade_type = ?, 
+          region = ?, description = ?, shipping_fee = ?,
+          image_main = COALESCE(?, image_main),
+          image_1 = COALESCE(?, image_1),
+          image_2 = COALESCE(?, image_2),
+          image_3 = COALESCE(?, image_3),
+          image_4 = COALESCE(?, image_4),
+          image_5 = COALESCE(?, image_5),
+          image_6 = COALESCE(?, image_6)
+      WHERE id = ?
+    `;
 
     connectionGM.query(sql, params, (err) => {
       if (err) {
@@ -824,12 +837,10 @@ app.post('/products/edit/:id', authenticateToken, (req, res) => {
 /* -- 장바구니 -- */
 //장바구니 조회
 app.get('/cart', authenticateToken, (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  // const token = 
+  req.headers.authorization?.split(' ')[1];
   const sql = `
-    SELECT cart_id AS id, product_id, title, brand, \`condition\`, price, shipping_fee, trade_type, region, image_main, added_at
-    FROM green_cart
-    WHERE user_id = ?
-  `;
+    SELECT cart_id AS id, product_id, title, brand, \`condition\`, price, shipping_fee, trade_type, region, image_main, added_at FROM green_cart WHERE user_id = ?`;
   connectionGM.query(sql, [req.user.id], (err, results) => {
     if (err) return res.status(500).json({ message: 'DB 오류' });
     res.json(results); 
@@ -964,6 +975,24 @@ app.post('/notice', (req, res) => {
       return;
     }
     res.json({success: true, insertId: result.insertId});
+  });
+});
+
+/* -- 검색 -- */
+app.get('/products/search', (req, res) => {
+  const keyword = req.query.keyword || '';
+  console.log(keyword);
+  if (!keyword.trim()) return res.json([]);
+
+  const sql = `
+    SELECT * FROM green_products
+    WHERE title LIKE ? OR brand LIKE ? OR kind LIKE ?
+    ORDER BY id DESC
+  `;
+  const likeKeyword = `%${keyword}%`;
+  connectionGM.query(sql, [likeKeyword, likeKeyword, likeKeyword], (err, rows) => {
+    if (err) return res.status(500).json({ error: '검색 실패' });
+    res.json(rows);
   });
 });
 
