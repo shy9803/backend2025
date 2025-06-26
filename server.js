@@ -696,8 +696,6 @@ app.post('/products', authenticateToken, upload, (req, res) => {
     console.log('✅ req.files:', req.files);
     
     const owner_id = req.user.id;  // 토큰에서 owner_id 가져오기
-    const shippingFeeRaw = b.shipping_fee;
-    const shippingFee = shippingFeeRaw ? Number(shippingFeeRaw) : 0;
 
     const sql = `INSERT INTO green_products (owner_id, title, brand, kind, \`condition\`, price, trade_type, region, description, shipping_fee, image_main, image_1, image_2, image_3, image_4, image_5, image_6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
