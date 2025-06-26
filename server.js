@@ -805,38 +805,11 @@ app.post('/products/edit/:id', authenticateToken, (req, res) => {
     const img = key => req.files?.[key]?.[0]?.filename ?? null;
 
     const params = [
-      title,
-      brand,
-      kind,
-      condition,
-      price,
-      trade_type,
-      region,
-      description,
-      shipping_fee || 0,
-      img('image_main'),
-      img('image_1'),
-      img('image_2'),
-      img('image_3'),
-      img('image_4'),
-      img('image_5'),
-      img('image_6'),
-      productId
+      title, brand, kind, condition, price, trade_type, region, description, shipping_fee || 0, img('image_main'), img('image_1'), img('image_2'), img('image_3'), img('image_4'), img('image_5'), img('image_6'), productId
     ];
 
     const sql = `
-      UPDATE green_products 
-      SET title = ?, brand = ?, kind = ?, \`condition\` = ?, price = ?, trade_type = ?, 
-          region = ?, description = ?, shipping_fee = ?,
-          image_main = COALESCE(?, image_main),
-          image_1 = COALESCE(?, image_1),
-          image_2 = COALESCE(?, image_2),
-          image_3 = COALESCE(?, image_3),
-          image_4 = COALESCE(?, image_4),
-          image_5 = COALESCE(?, image_5),
-          image_6 = COALESCE(?, image_6)
-      WHERE id = ?
-    `;
+      UPDATE green_products SET title = ?, brand = ?, kind = ?, \`condition\` = ?, price = ?, trade_type = ?, region = ?, description = ?, shipping_fee = ?, image_main = COALESCE(?, image_main), image_1 = COALESCE(?, image_1), image_2 = COALESCE(?, image_2), image_3 = COALESCE(?, image_3), image_4 = COALESCE(?, image_4), image_5 = COALESCE(?, image_5), image_6 = COALESCE(?, image_6) WHERE id = ?`;
 
     connectionGM.query(sql, params, (err) => {
       if (err) {
@@ -849,8 +822,8 @@ app.post('/products/edit/:id', authenticateToken, (req, res) => {
 });
 
 /* -- 장바구니 -- */
-//장바구니 조회 (하단과 유사)
-app.get('/api/cart', authenticateToken, (req, res) => {
+//장바구니 조회
+app.get('/cart', authenticateToken, (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   const sql = `
     SELECT cart_id AS id, product_id, title, brand, \`condition\`, price, shipping_fee, trade_type, region, image_main, added_at
@@ -864,7 +837,7 @@ app.get('/api/cart', authenticateToken, (req, res) => {
 });
 
 //장바구니 삭제
-app.delete('/api/cart', authenticateToken, (req, res) => {
+app.delete('/cart', authenticateToken, (req, res) => {
   const ids = req.body.ids;
   if (!Array.isArray(ids) || !ids.length) {
     return res.status(400).json({ message: '삭제할 상품 ID가 필요합니다.' });
@@ -880,11 +853,13 @@ app.delete('/api/cart', authenticateToken, (req, res) => {
 });
 
 /* -- 장바구니 추가 -- */
-app.post('/api/cart', authenticateToken, (req, res) => {
+app.post('/cart', authenticateToken, (req, res) => {
   const { product_id } = req.body;
+
   // 상품 상세 정보 조회
   const productSql = 
-    'SELECT title, brand, \`condition\`, price, trade_type, region, image_main, shipping_fee FROM green_products WHERE id = ?';
+    'SELECT title, brand, kind, `condition`, price, trade_type, region, image_main, shipping_fee FROM green_products WHERE id = ?';
+    
   connectionGM.query(productSql, [product_id], (productErr, productResults) => {
     if (productErr) return res.status(500).json({ error: '상품 조회 오류' });
     if (!productResults.length) return res.status(404).json({ error: '상품 없음' });
