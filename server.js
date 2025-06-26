@@ -811,18 +811,7 @@ app.post('/products/edit/:id', authenticateToken, (req, res) => {
     ];
 
     const sql = `
-      UPDATE green_products 
-      SET title = ?, brand = ?, kind = ?, \`condition\` = ?, price = ?, trade_type = ?, 
-          region = ?, description = ?, shipping_fee = ?,
-          image_main = COALESCE(?, image_main),
-          image_1 = COALESCE(?, image_1),
-          image_2 = COALESCE(?, image_2),
-          image_3 = COALESCE(?, image_3),
-          image_4 = COALESCE(?, image_4),
-          image_5 = COALESCE(?, image_5),
-          image_6 = COALESCE(?, image_6)
-      WHERE id = ?
-    `;
+      UPDATE green_products SET title = ?, brand = ?, kind = ?, \`condition\` = ?, price = ?, trade_type = ?, region = ?, description = ?, shipping_fee = ?, image_main = COALESCE(?, image_main), image_1 = COALESCE(?, image_1), image_2 = COALESCE(?, image_2), image_3 = COALESCE(?, image_3), image_4 = COALESCE(?, image_4), image_5 = COALESCE(?, image_5), image_6 = COALESCE(?, image_6) WHERE id = ?`;
 
     connectionGM.query(sql, params, (err) => {
       if (err) {
