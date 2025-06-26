@@ -702,7 +702,7 @@ app.post('/products', authenticateToken, upload, (req, res) => {
 
   const params = [
     owner_id, // 클라이언트가 보내지 않는 owner_id, 서버에서 넣음
-    b.title, b.brand, b.kind, b.condition, b.price, b.tradeType, b.region, b.description, shippingFee, img('image_main'), img('image_1'), img('image_2'), img('image_3'), img('image_4'), img('image_5'), img('image_6')
+    b.title, b.brand, b.kind, b.condition, b.price, b.trade_type, b.region, b.description, shippingFee, img('image_main'), img('image_1'), img('image_2'), img('image_3'), img('image_4'), img('image_5'), img('image_6')
   ];
 
   connectionGM.query(sql, params, (err, result) => {
@@ -745,7 +745,7 @@ app.get('/products', (req, res) => {
       if (err) return res.status(500).json({ error: '조회 실패' });
 
       const products = rows.map(r => ({
-        id: r.id, title: r.title, brand: r.brand, kind: r.kind, condition: r.condition, price: r.price, tradeType: r.trade_type, region: r.region, description: r.description, datetime: r.datetime, images: [r.image_main, r.image_1, r.image_2, r.image_3, r.image_4, r.image_5, r.image_6].filter(Boolean)
+        id: r.id, title: r.title, brand: r.brand, kind: r.kind, condition: r.condition, price: r.price, trade_type: r.trade_type, region: r.region, description: r.description, datetime: r.datetime, images: [r.image_main, r.image_1, r.image_2, r.image_3, r.image_4, r.image_5, r.image_6].filter(Boolean)
       }));
       res.json(products);
     }
