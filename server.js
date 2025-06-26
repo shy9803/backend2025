@@ -21,6 +21,7 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 app.use('/uploads', express.static(uploadDir));
+app.use('/uploads', express.static(uploadDir)); // http://localhost:9070/uploads/파일명 접근 가능
 
 /* -- multer 설정 -- */
 // multer
@@ -667,17 +668,14 @@ app.get('/member/:id', (req, res) => {
 });
 
 /* -- 상품 -- */
-// 상품 등록 API
+// 회원 인증 미들웨어
 function authenticateToken(req, res, next) {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.status(401).json({ message: '토큰 없음' });
-
+// 토큰 검증
   jwt.verify(token, SECRET_KEY, (err, user) => {
-    if (err) {
-      console.error('JWT 검증 오류:', err);
-      return res.status(401).json({ message: '유효하지 않은 토큰입니다.' });
-    }
+    if (err) return res.status(401).json({ message: '유효하지 않은 토큰입니다.' });
     req.user = user;
     next();
   });
@@ -685,40 +683,70 @@ function authenticateToken(req, res, next) {
 
 // 상품 등록(= post)
 app.post('/products', authenticateToken, upload, (req, res) => {
-  // console.log('req.body:', req.body);
-  // console.log('req.files:', req.files);
-
-  const b = req.body;
-  const img = key => req.files?.[key]?.[0]?.filename ?? null;
-
-  const owner_id = req.user.id;  // 토큰에서 owner_id 가져오기
-  const shippingFeeRaw = b.shipping_fee;
-  const shippingFee = shippingFeeRaw ? Number(shippingFeeRaw) : 0;
-
-  const sql = `INSERT INTO green_products (owner_id, title, brand, kind, \`condition\`, price, trade_type, region, description, shipping_fee, image_main, image_1, image_2, image_3, image_4, image_5, image_6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-  const params = [
-    owner_id, // 클라이언트가 보내지 않는 owner_id, 서버에서 넣음
-    b.title, b.brand, b.kind, b.condition, b.price, b.tradeType, b.region, b.description, shippingFee, img('image_main'), img('image_1'), img('image_2'), img('image_3'), img('image_4'), img('image_5'), img('image_6')
-  ];
-
-  connectionGM.query(sql, params, (err, result) => {
-    if(err) {
-      console.error('INSERT ERROR: ', err);
-      return res.status(500).json({error: '상품 등록 실패'});
+  upload(req, res, (uploadErr) => {
+    if (uploadErr) {
+      console.error('🔥 파일 업로드 실패:', uploadErr);
+      return res.status(500).json({ error: '파일 업로드 실패' });
     }
-    res.json({success: true, id: result.insertId});
+
+    const b = req.body;
+    const img = key => req.files?.[key]?.[0]?.filename ?? null;
+
+    console.log('✅ req.user:', req.user);
+    console.log('✅ req.body:', req.body);
+    console.log('✅ req.files:', req.files);
+    
+    const owner_id = req.user.id;  // 토큰에서 owner_id 가져오기
+    const shippingFeeRaw = b.shipping_fee;
+    const shippingFee = shippingFeeRaw ? Number(shippingFeeRaw) : 0;
+
+    const sql = `INSERT INTO green_products (owner_id, title, brand, kind, \`condition\`, price, trade_type, region, description, shipping_fee, image_main, image_1, image_2, image_3, image_4, image_5, image_6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const params = [
+      owner_id, // 클라이언트가 보내지 않는 owner_id, 서버에서 넣음
+      b.title, b.brand, b.kind, b.condition, b.price, b.tradeType, b.region, b.description, b.shipping_fee || 0, img('image_main'), img('image_1'), img('image_2'), img('image_3'), img('image_4'), img('image_5'), img('image_6')
+    ];
+
+    connectionGM.query(sql, params, (err, result) => {
+      if(err) {
+        console.error('INSERT ERROR: ', err);
+        return res.status(500).json({error: '상품 등록 실패'});
+      }
+      res.json({success: true, id: result.insertId});
+    });
   });
 });
 
 // 상품 조회 API
+//상품상세페이지에서 카테고리가 같은 상품 목록 조회 현재 보고 있는 상품은 제외
 app.get('/products', (req, res) => {
-  connectionGM.query(
-    'SELECT * FROM green_products ORDER BY id DESC',
-    (err, rows) => {
+  const { owner_id, exclude_id, category } = req.query;
+
+  let query = 'SELECT * FROM green_products WHERE 1=1';
+  const params = [];
+
+  if (owner_id) {
+    query += ' AND owner_id = ?';
+    params.push(owner_id);
+  }
+
+  if (exclude_id) {
+    query += ' AND id != ?';
+    params.push(exclude_id);
+  }
+
+  if (category) {
+    query += ' AND kind = ?';
+    params.push(category);
+  }
+
+  query += ' ORDER BY id DESC';
+
+  connectionGM.query(query, params, (err, rows) => {
       if (err) return res.status(500).json({ error: '조회 실패' });
+
       const products = rows.map(r => ({
-        id: r.id, title: r.title, brand: r.brand, kind: r.kind, condition: r.condition, price: r.price, tradeType: r.trade_type, region: r.region, description: r.description, datetime: r.datetime, images: [r.image_main, r.image_1, r.image_2, r.image_3, r.image_4, r.image_5, r.image_6].filter(v => v)
+        id: r.id, title: r.title, brand: r.brand, kind: r.kind, condition: r.condition, price: r.price, tradeType: r.trade_type, region: r.region, description: r.description, datetime: r.datetime, images: [r.image_main, r.image_1, r.image_2, r.image_3, r.image_4, r.image_5, r.image_6].filter(Boolean)
       }));
       res.json(products);
     }
@@ -726,21 +754,100 @@ app.get('/products', (req, res) => {
 });
 
 // 상품 상세 조회
-app.get('/api/products/:id', (req, res) => {
+//상세페이지에서 판매자의 다른 상품 목록 조회
+app.get('/products/:id', (req, res) => {
   const sql = `
-    SELECT 
-      p.*, 
-      u.username AS seller_name,
-      (SELECT COUNT(*) FROM green_products WHERE owner_id = p.owner_id) AS seller_product_count
+    SELECT p.*, u.username AS seller_name,
+    (SELECT COUNT(*) FROM green_products WHERE owner_id = p.owner_id) AS seller_product_count
     FROM green_products p
     JOIN green_users u ON p.owner_id = u.id
-    WHERE p.id = ?
-  `;
-
+    WHERE p.id = ?`;
   connectionGM.query(sql, [req.params.id], (err, rows) => {
     if (err) return res.status(500).json({ error: 'DB 오류' });
     if (!rows.length) return res.status(404).json({ error: '상품 없음' });
     res.json(rows[0]);
+  });
+});
+
+//상품을 올린 사용자만 삭제 버튼 기능 구현
+app.delete('/products/:id', authenticateToken, (req, res) => {
+  const productId = req.params.id;
+  const userId = req.user.id;
+
+  // 1) 상품 소유자 확인
+  const checkOwnerSql = 'SELECT owner_id FROM green_products WHERE id = ?';
+  connectionGM.query(checkOwnerSql, [productId], (err, rows) => {
+    if (err) return res.status(500).json({ error: 'DB 오류' });
+    if (rows.length === 0) return res.status(404).json({ error: '상품 없음' });
+
+    const ownerId = rows[0].owner_id;
+    if (ownerId !== userId) {
+      return res.status(403).json({ error: '삭제 권한 없음' });
+    }
+
+    // 2) 삭제 쿼리 실행
+    const deleteSql = 'DELETE FROM green_products WHERE id = ?';
+    connectionGM.query(deleteSql, [productId], (deleteErr, result) => {
+      if (deleteErr) return res.status(500).json({ error: '삭제 실패' });
+      res.json({ success: true });
+    });
+  });
+});
+
+//상품수정
+app.post('/products/edit/:id', authenticateToken, (req, res) => {
+  const productId = req.params.id;
+
+  upload(req, res, (uploadErr) => {
+    if (uploadErr) {
+      console.error('파일 업로드 실패:', uploadErr);
+      return res.status(500).json({ error: '파일 업로드 실패' });
+    }
+    const { title, brand, kind, condition, price, trade_type, region, description, shipping_fee } = req.body;
+
+    const img = key => req.files?.[key]?.[0]?.filename ?? null;
+
+    const params = [
+      title,
+      brand,
+      kind,
+      condition,
+      price,
+      trade_type,
+      region,
+      description,
+      shipping_fee || 0,
+      img('image_main'),
+      img('image_1'),
+      img('image_2'),
+      img('image_3'),
+      img('image_4'),
+      img('image_5'),
+      img('image_6'),
+      productId
+    ];
+
+    const sql = `
+      UPDATE green_products 
+      SET title = ?, brand = ?, kind = ?, \`condition\` = ?, price = ?, trade_type = ?, 
+          region = ?, description = ?, shipping_fee = ?,
+          image_main = COALESCE(?, image_main),
+          image_1 = COALESCE(?, image_1),
+          image_2 = COALESCE(?, image_2),
+          image_3 = COALESCE(?, image_3),
+          image_4 = COALESCE(?, image_4),
+          image_5 = COALESCE(?, image_5),
+          image_6 = COALESCE(?, image_6)
+      WHERE id = ?
+    `;
+
+    connectionGM.query(sql, params, (err) => {
+      if (err) {
+        console.error('❌ 상품 수정 에러:', err.sqlMessage || err.message);
+        return res.status(500).json({ error: err.sqlMessage || '상품 수정 실패' });
+      }
+      res.json({ success: true });
+    });
   });
 });
 
