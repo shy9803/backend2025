@@ -682,35 +682,35 @@ function authenticateToken(req, res, next) {
 
 // 상품 등록(= post)
 app.post('/products', authenticateToken, upload, (req, res) => {
-  upload(req, res, (uploadErr) => {
-    if (uploadErr) {
-      console.error('🔥 파일 업로드 실패:', uploadErr);
-      return res.status(500).json({ error: '파일 업로드 실패' });
+  // if (uploadErr) {
+  //   console.error('🔥 파일 업로드 실패:', uploadErr);
+  //   return res.status(500).json({ error: '파일 업로드 실패' });
+  // }
+
+  const b = req.body;
+  const img = key => req.files?.[key]?.[0]?.filename ?? null;
+
+  console.log('✅ req.user:', req.user);
+  console.log('✅ req.body:', req.body);
+  console.log('✅ req.files:', req.files);
+
+  const owner_id = req.user.id;
+  const shippingFeeRaw = b.shipping_fee;
+  const shippingFee = shippingFeeRaw ? Number(shippingFeeRaw) : 0;
+
+  const sql = `INSERT INTO green_products (owner_id, title, brand, kind, \`condition\`, price, trade_type, region, description, shipping_fee, image_main, image_1, image_2, image_3, image_4, image_5, image_6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  const params = [
+    owner_id, // 클라이언트가 보내지 않는 owner_id, 서버에서 넣음
+    b.title, b.brand, b.kind, b.condition, b.price, b.tradeType, b.region, b.description, shippingFee, img('image_main'), img('image_1'), img('image_2'), img('image_3'), img('image_4'), img('image_5'), img('image_6')
+  ];
+
+  connectionGM.query(sql, params, (err, result) => {
+    if(err) {
+      console.error('INSERT ERROR: ', err);
+      return res.status(500).json({error: '상품 등록 실패'});
     }
-
-    const b = req.body;
-    const img = key => req.files?.[key]?.[0]?.filename ?? null;
-
-    console.log('✅ req.user:', req.user);
-    console.log('✅ req.body:', req.body);
-    console.log('✅ req.files:', req.files);
-    
-    const owner_id = req.user.id;  // 토큰에서 owner_id 가져오기
-
-    const sql = `INSERT INTO green_products (owner_id, title, brand, kind, \`condition\`, price, trade_type, region, description, shipping_fee, image_main, image_1, image_2, image_3, image_4, image_5, image_6) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-    const params = [
-      owner_id, // 클라이언트가 보내지 않는 owner_id, 서버에서 넣음
-      b.title, b.brand, b.kind, b.condition, b.price, b.tradeType, b.region, b.description, b.shipping_fee || 0, img('image_main'), img('image_1'), img('image_2'), img('image_3'), img('image_4'), img('image_5'), img('image_6')
-    ];
-
-    connectionGM.query(sql, params, (err, result) => {
-      if(err) {
-        console.error('INSERT ERROR: ', err);
-        return res.status(500).json({error: '상품 등록 실패'});
-      }
-      res.json({success: true, id: result.insertId});
-    });
+    res.json({success: true, id: result.insertId});
   });
 });
 
