@@ -20,7 +20,6 @@ const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
-app.use('/uploads', express.static(uploadDir));
 app.use('/uploads', express.static(uploadDir)); // http://localhost:9070/uploads/파일명 접근 가능
 
 /* -- multer 설정 -- */
