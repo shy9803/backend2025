@@ -48,6 +48,8 @@ const upload = multer({ storage }).fields([
 
 // MySQL
 const mysql = require('mysql');  //mysql변수 선언
+
+
 //1. mysql 연결 정보 셋팅
 /* KDT */
 const connectionKdt = mysql.createConnection({
@@ -82,20 +84,43 @@ connectionGnp.connect((err)=>{
 });
 
 /* GreenMarket */
-const connectionGM = mysql.createConnection({
+// Error: read ECONNRESET 오류 해결을 위한 추가 및 변경
+const mysql = require('mysql');
+const db_config = {
   host:'database',
   user:'root',
   password:'1234',
   database:'greenmarket'
-});
+}
 
-connectionGM.connect((err)=>{
-  if(err){
-    console.log('MYSQL연결 실패 : ', err);
-    return;
-  }
-  console.log('MYSQL연결 성공');
-});
+let connectionGM;
+
+function handleDisconnect() {
+  connectionGM = mysql.createConnection(db_config);
+
+  connectionGM.connect(err => {
+    if (err) {
+      console.error('❌ DB 연결 실패:', err);
+      setTimeout(handleDisconnect, 2000); // 2초 후 재시도
+    } else {
+      console.log('✅ DB 연결 성공');
+    }
+  });
+
+  // 연결 에러 감지 후 재시도
+  connectionGM.on('error', function (err) {
+    console.error('🔥 MySQL 에러:', err);
+    if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+      console.warn('🔄 DB 연결 끊김. 재연결 시도...');
+      handleDisconnect(); // 재연결
+    } else {
+      throw err;
+    }
+  });
+}
+
+// 서버 시작 시 최초 연결 시도
+handleDisconnect();
 
 /* ------------ KDT 수업 ----------------- */
 // 3. 로그인 폼에서 post 방식으로 전달받은 데이터를 DB에 조회하여 결과값을 리턴함.
