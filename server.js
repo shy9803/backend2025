@@ -85,7 +85,7 @@ connectionGnp.connect((err)=>{
 
 /* GreenMarket */
 // Error: read ECONNRESET 오류 해결을 위한 추가 및 변경
-const mysql = require('mysql');
+const mysqlGM = require('mysql');
 const db_config = {
   host:'database',
   user:'root',
@@ -96,7 +96,7 @@ const db_config = {
 let connectionGM;
 
 function handleDisconnect() {
-  connectionGM = mysql.createConnection(db_config);
+  connectionGM = mysqlGM.createConnection(db_config);
 
   connectionGM.connect(err => {
     if (err) {
